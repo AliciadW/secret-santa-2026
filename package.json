@@ -10,7 +10,8 @@
     "db:generate": "drizzle-kit generate",
     "typecheck": "nuxt typecheck",
     "test": "tsx --test tests/*.test.ts",
-    "test:production": "node --test tests/production.test.mjs"
+    "test:production": "node --test tests/production.test.mjs",
+    "test:netlify": "node --test tests/netlify.test.mjs"
   },
   "dependencies": {
     "@netlify/database": "^2.0.1",

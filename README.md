@@ -67,6 +67,15 @@ node .output/server/index.mjs
 
 The standalone built server requires a configured Postgres connection (`NETLIFY_DB_URL` and, for a normal Postgres server, `NETLIFY_DB_DRIVER=server`). Supply these environment variables to the process; the standalone server does not automatically read `.env`.
 
+To verify the Netlify adapter itself, build for that target and run its regression test:
+
+```sh
+npm run build -- --preset=netlify
+npm run test:netlify
+```
+
+This test invokes the generated Netlify function with Web `Request` objects and an isolated Postgres engine. It covers draw creation, request validation, the byte limit, private links, and stable reveals. Node server tests alone do not exercise Netlify's request adapter.
+
 The UI uses Google Fonts with local serif/sans-serif fallbacks and contains no analytics or third-party JavaScript. Private page and API responses use `no-store` and `no-referrer` headers.
 
 Tests apply the exact committed SQL migration to isolated PGlite Postgres engines. They cover the eight-person rules across 1,000 draws, input normalisation and duplicates, invalid credentials, separate draws, repeat and concurrent reveals, SQL constraints, transaction rollback, asynchronous API errors, and persistence across database restart. No live database or Netlify credentials are used. The production test starts the built Node server and a temporary Postgres protocol server, then checks pages, API validation, credentials, privacy headers, name tampering, and concurrent reveals through the real Netlify Database/Drizzle connection path.
