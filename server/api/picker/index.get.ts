@@ -1,7 +1,7 @@
 import { getDrawStore } from '../../utils/store'
 import { bearerToken, withDrawErrors } from '../../utils/api'
 
-export default defineEventHandler((event) => {
+export default defineEventHandler(async (event) => {
   const token = bearerToken(event)
-  return withDrawErrors(() => getDrawStore().invitation(token))
+  return await withDrawErrors(() => getDrawStore().invitation(token))
 })

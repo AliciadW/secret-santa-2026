@@ -17,5 +17,5 @@ export default defineEventHandler(async (event) => {
   } catch {
     throw createError({ statusCode: 400, statusMessage: 'Please send a valid draw.' })
   }
-  return withDrawErrors(() => getDrawStore().create(body))
+  return await withDrawErrors(() => getDrawStore().create(body))
 })

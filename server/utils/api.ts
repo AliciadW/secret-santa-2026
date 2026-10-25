@@ -9,8 +9,8 @@ export function bearerToken(event: H3Event) {
   return header.slice(7)
 }
 
-export function withDrawErrors<T>(operation: () => T): T {
-  try { return operation() } catch (error) {
+export async function withDrawErrors<T>(operation: () => T | Promise<T>): Promise<T> {
+  try { return await operation() } catch (error) {
     if (error instanceof DrawError) {
       throw createError({ statusCode: error.statusCode, statusMessage: error.message })
     }

@@ -1,0 +1,388 @@
+{
+  "type": "base",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "59072678-fdc6-4c94-8355-4d983b243e22",
+  "prevIds": [
+    "00000000-0000-0000-0000-000000000000"
+  ],
+  "footprints": [
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "draws"
+      ],
+      "writes": [
+        "s|tbl|public.draws",
+        "n|tbl|public.draws",
+        "e|tbl|public.draws",
+        "n|rel|public.draws",
+        "n|type|public.draws",
+        "n|rel|public.draws_pkey"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "participants"
+      ],
+      "writes": [
+        "s|tbl|public.participants",
+        "n|tbl|public.participants",
+        "e|tbl|public.participants",
+        "n|rel|public.participants",
+        "n|type|public.participants",
+        "n|rel|public.participants_pkey",
+        "n|rel|public.participants_draw_id_id_unique",
+        "n|rel|public.participants_draw_id_name_unique",
+        "n|rel|public.participants_draw_id_recipient_id_unique",
+        "n|rel|public.participants_draw_id_position_unique",
+        "n|rel|public.participants_token_key"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "participants"
+      ],
+      "writes": [
+        "s|fk|public.participants.participants_draw_id_draws_id_fkey",
+        "n|fk|public.participants.participants_draw_id_draws_id_fkey",
+        "e|fk|public.participants.participants_draw_id_draws_id_fkey",
+        "n|con|public.participants.participants_draw_id_draws_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.participants",
+        "n|sch|public",
+        "n|tbl|public.draws",
+        "n|sch|public",
+        "n|col|public.participants.draw_id",
+        "n|col|public.draws.id",
+        "e|uniqueness|public.draws.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "participants"
+      ],
+      "writes": [
+        "s|fk|public.participants.participants_recipient_same_draw_fk",
+        "n|fk|public.participants.participants_recipient_same_draw_fk",
+        "e|fk|public.participants.participants_recipient_same_draw_fk",
+        "n|con|public.participants.participants_recipient_same_draw_fk"
+      ],
+      "reads": [
+        "n|tbl|public.participants",
+        "n|sch|public",
+        "n|tbl|public.participants",
+        "n|sch|public",
+        "n|col|public.participants.draw_id",
+        "n|col|public.participants.recipient_id",
+        "n|col|public.participants.draw_id",
+        "n|col|public.participants.id",
+        "e|uniqueness|public.participants.draw_id.id"
+      ]
+    }
+  ],
+  "ddl": [
+    {
+      "schema": "public",
+      "name": "draws",
+      "isRlsEnabled": false,
+      "entityType": "tables"
+    },
+    {
+      "schema": "public",
+      "name": "participants",
+      "isRlsEnabled": false,
+      "entityType": "tables"
+    },
+    {
+      "schema": "public",
+      "table": "draws",
+      "name": "id",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "draws",
+      "name": "title",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "draws",
+      "name": "admin_key_hash",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "draws",
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "participants",
+      "name": "id",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "participants",
+      "name": "draw_id",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "participants",
+      "name": "name",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "participants",
+      "name": "token",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "participants",
+      "name": "recipient_id",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "participants",
+      "name": "opened_at",
+      "type": "timestamp with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "participants",
+      "name": "position",
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "participants",
+      "name": "participants_draw_id_draws_id_fkey",
+      "nameExplicit": false,
+      "columns": [
+        "draw_id"
+      ],
+      "schemaTo": "public",
+      "tableTo": "draws",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "entityType": "fks"
+    },
+    {
+      "schema": "public",
+      "table": "participants",
+      "name": "participants_recipient_same_draw_fk",
+      "nameExplicit": true,
+      "columns": [
+        "draw_id",
+        "recipient_id"
+      ],
+      "schemaTo": "public",
+      "tableTo": "participants",
+      "columnsTo": [
+        "draw_id",
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "entityType": "fks"
+    },
+    {
+      "schema": "public",
+      "table": "draws",
+      "name": "draws_pkey",
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "entityType": "pks"
+    },
+    {
+      "schema": "public",
+      "table": "participants",
+      "name": "participants_pkey",
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "entityType": "pks"
+    },
+    {
+      "schema": "public",
+      "table": "participants",
+      "name": "participants_draw_id_id_unique",
+      "nameExplicit": true,
+      "columns": [
+        "draw_id",
+        "id"
+      ],
+      "nullsNotDistinct": false,
+      "entityType": "uniques"
+    },
+    {
+      "schema": "public",
+      "table": "participants",
+      "name": "participants_draw_id_name_unique",
+      "nameExplicit": true,
+      "columns": [
+        "draw_id",
+        "name"
+      ],
+      "nullsNotDistinct": false,
+      "entityType": "uniques"
+    },
+    {
+      "schema": "public",
+      "table": "participants",
+      "name": "participants_draw_id_recipient_id_unique",
+      "nameExplicit": true,
+      "columns": [
+        "draw_id",
+        "recipient_id"
+      ],
+      "nullsNotDistinct": false,
+      "entityType": "uniques"
+    },
+    {
+      "schema": "public",
+      "table": "participants",
+      "name": "participants_draw_id_position_unique",
+      "nameExplicit": true,
+      "columns": [
+        "draw_id",
+        "position"
+      ],
+      "nullsNotDistinct": false,
+      "entityType": "uniques"
+    },
+    {
+      "schema": "public",
+      "table": "participants",
+      "name": "participants_token_key",
+      "nameExplicit": false,
+      "columns": [
+        "token"
+      ],
+      "nullsNotDistinct": false,
+      "entityType": "uniques"
+    },
+    {
+      "schema": "public",
+      "table": "participants",
+      "name": "participants_no_self_assignment",
+      "value": "\"id\" <> \"recipient_id\"",
+      "entityType": "checks"
+    },
+    {
+      "schema": "public",
+      "table": "participants",
+      "name": "participants_position_range",
+      "value": "\"position\" >= 0 AND \"position\" < 8",
+      "entityType": "checks"
+    }
+  ]
+}

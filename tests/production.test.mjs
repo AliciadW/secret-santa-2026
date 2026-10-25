@@ -1,21 +1,28 @@
 import assert from 'node:assert/strict'
 import { spawn } from 'node:child_process'
 import { once } from 'node:events'
-import { mkdtemp, rm } from 'node:fs/promises'
 import { createServer } from 'node:net'
-import { tmpdir } from 'node:os'
-import { join } from 'node:path'
 import test from 'node:test'
+import { PGLiteSocketServer } from '@electric-sql/pglite-socket'
+import { createTestPostgres } from './helpers/postgres.mjs'
 
 test('production app serves pages, enforces credentials, and reveals one stable unique name per invitation', { timeout: 30000 }, async () => {
-  const directory = await mkdtemp(join(tmpdir(), 'secret-santa-http-'))
+  const database = await createTestPostgres()
+  const postgres = new PGLiteSocketServer({ db: database, host: '127.0.0.1', port: 0, maxConnections: 20 })
+  await postgres.start()
   const reserve = createServer()
   reserve.listen(0, '127.0.0.1')
   await once(reserve, 'listening')
   const port = reserve.address().port
   await new Promise(resolve => reserve.close(resolve))
   const server = spawn(process.execPath, ['.output/server/index.mjs'], {
-    env: { ...process.env, NITRO_HOST: '127.0.0.1', NITRO_PORT: String(port), SECRET_SANTA_DB_PATH: join(directory, 'test.sqlite') },
+    env: {
+      ...process.env,
+      NITRO_HOST: '127.0.0.1',
+      NITRO_PORT: String(port),
+      NETLIFY_DB_URL: `postgresql://postgres:postgres@${postgres.getServerConn()}/postgres?sslmode=disable`,
+      NETLIFY_DB_DRIVER: 'server',
+    },
     stdio: ['ignore', 'pipe', 'pipe'],
   })
   const base = `http://127.0.0.1:${port}`
@@ -42,7 +49,7 @@ test('production app serves pages, enforces credentials, and reveals one stable 
     assert.equal((await postDraw({ names: ['ben', ...names.slice(1)] })).status, 400)
     assert.equal((await postDraw({ names, title: 'a'.repeat(9000) })).status, 413)
     const response = await postDraw({ names })
-    assert.equal(response.status, 200)
+    assert.equal(response.status, 200, `Draw creation failed. Server output: ${output}`)
     const draw = await response.json()
     const auth = token => ({ authorization: `Bearer ${token}` })
     const adminPath = `${base}/api/draws/${draw.id}`
@@ -80,6 +87,7 @@ test('production app serves pages, enforces credentials, and reveals one stable 
     const exited = once(server, 'exit')
     server.kill('SIGTERM')
     await exited
-    await rm(directory, { recursive: true, force: true })
+    await postgres.stop()
+    await database.close()
   }
 })

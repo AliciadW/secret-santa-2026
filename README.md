@@ -4,14 +4,23 @@ A Nuxt 4 app for an eight-person Secret Santa draw. Enter eight names, share per
 
 ## Run locally
 
-Use Node.js 22.14 or newer (includes `node:sqlite`), then:
+Use Node.js 22.14 or newer. Install dependencies, link this folder to the existing Netlify site, and start Netlify's local development environment:
 
 ```sh
 npm install
-npm run dev
+npx netlify link
+npx netlify dev
 ```
 
-Open the local address printed in the terminal, normally `http://localhost:3000`.
+Netlify Dev starts the Nuxt dev server and provides a local Postgres database. In a second terminal, apply the migrations to that local database:
+
+```sh
+npx netlify database migrations apply
+```
+
+Open the local address printed by Netlify Dev. The local database is separate from production. No external database account or manually copied production credentials are needed.
+
+If you already run your own local Postgres database, set `NETLIFY_DB_URL` and `NETLIFY_DB_DRIVER=server` in an ignored `.env` file (see `.env.example`), apply the SQL migrations to that local database, and use `npm run dev` directly.
 
 1. Enter a draw title and exactly eight unique names.
 2. Create the draw and save the private organiser URL. It is the only way to return to the invitations.
@@ -32,9 +41,19 @@ The organiser screen shows reveal status, without displaying pairings. Links do 
 
 ## Draw rules and persistence
 
-All eight assignments are generated and saved in one SQLite transaction before any participant picks. A cryptographically random Fisher–Yates shuffle is repeated until no one is assigned themselves. Every valid permutation has the same probability. Every name appears exactly once as a recipient, and the draw cannot get stuck on the last participant. Database constraints also reject self-assignments and duplicate recipients. Mutual pairs are allowed.
+All eight assignments are generated and saved in one Postgres transaction before any participant picks. A cryptographically random Fisher–Yates shuffle is repeated until no one is assigned themselves. Every valid permutation has the same probability. Every name appears exactly once as a recipient, and the draw cannot get stuck on the last participant. Database constraints reject self-assignments, duplicate names, tokens and recipients, and recipients from another draw. Mutual pairs are allowed. Repeated or concurrent reveals preserve both the pairing and the first reveal timestamp.
 
-The database defaults to `.data/secret-santa.sqlite`, which is ignored by Git. This file contains names, private invitation tokens, and pairings; keep it private and back it up. To change its location, set `SECRET_SANTA_DB_PATH` (see `.env.example`).
+Storage uses [Netlify Database](https://docs.netlify.com/build/data-and-storage/netlify-database/) (managed Postgres) through `@netlify/database` and Drizzle ORM. The connection is resolved at runtime, and importing the app or building it does not connect to the database. Names, private invitation tokens, and pairings remain server-side. The organiser's original name order is preserved with an explicit position column.
+
+## Deploy to Netlify
+
+Connect the GitHub repository to the existing Netlify site. Use `npm run build`, the detected Nuxt publish directory (`dist`), and Node.js 22.14 or newer. Keep Nitro's Netlify server deployment enabled; a static export cannot enforce a shared draw.
+
+Installing `@netlify/database` lets Netlify provision and configure the site's Postgres database. Netlify automatically applies the committed migrations in `netlify/database/migrations/` immediately before publishing a deployment. Do not run migrations against the live database from a build command or application request. See [Netlify's migration lifecycle](https://docs.netlify.com/build/data-and-storage/netlify-database/migrations/).
+
+The schema is defined in `db/schema.ts`. After a future schema change, run `npm run db:generate` and commit the newly generated migration and snapshot. Keep deployed migration files unchanged; create a new migration for subsequent changes. Drizzle ORM and Kit use matching release-candidate versions because the native Netlify Database adapter is not available in Drizzle's current stable release.
+
+There is no existing application data to migrate for this change. New draws persist in Netlify Database across function instances and redeployments. Production connection details are supplied by Netlify; never commit them to Git. Serve over HTTPS and avoid logging full invitation URLs.
 
 ## Verify and build
 
@@ -46,8 +65,8 @@ npm run test:production
 node .output/server/index.mjs
 ```
 
-Production needs a Node server and a persistent writable disk for SQLite. Set `SECRET_SANTA_DB_PATH` to a durable absolute path and keep the same database across restarts and redeployments. Production environment variables must be supplied to the process; the built server does not automatically read `.env`. Serve over HTTPS and avoid logging full invitation URLs. Use one host with a local disk; for multiple hosts or ephemeral/serverless deployments, replace SQLite with a shared transactional database. A static export cannot enforce a shared draw.
+The standalone built server requires a configured Postgres connection (`NETLIFY_DB_URL` and, for a normal Postgres server, `NETLIFY_DB_DRIVER=server`). Supply these environment variables to the process; the standalone server does not automatically read `.env`.
 
 The UI uses Google Fonts with local serif/sans-serif fallbacks and contains no analytics or third-party JavaScript. Private page and API responses use `no-store` and `no-referrer` headers.
 
-Tests cover the eight-person rules across 1,000 draws, input normalisation and duplicates, invalid credentials, separate draws, repeat reveals, and persistence across database reopen. The production test starts the built server on a temporary port with a temporary database and checks pages, API validation, credentials, privacy headers, name tampering, and concurrent reveals.
+Tests apply the exact committed SQL migration to isolated PGlite Postgres engines. They cover the eight-person rules across 1,000 draws, input normalisation and duplicates, invalid credentials, separate draws, repeat and concurrent reveals, SQL constraints, transaction rollback, asynchronous API errors, and persistence across database restart. No live database or Netlify credentials are used. The production test starts the built Node server and a temporary Postgres protocol server, then checks pages, API validation, credentials, privacy headers, name tampering, and concurrent reveals through the real Netlify Database/Drizzle connection path.
