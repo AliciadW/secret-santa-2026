@@ -1,0 +1,26 @@
+{
+  "name": "secret-santa",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "nuxt dev",
+    "build": "nuxt build",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare",
+    "typecheck": "nuxt typecheck",
+    "test": "tsx --test tests/*.test.ts",
+    "test:production": "node --test tests/production.test.mjs"
+  },
+  "dependencies": {
+    "nuxt": "4.2.2",
+    "vue": "^3.5.25",
+    "vue-router": "^4.6.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3",
+    "vue-tsc": "^3.1.5"
+  },
+  "engines": { "node": ">=22.14.0" }
+}
