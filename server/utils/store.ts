@@ -82,5 +82,20 @@ export class DrawStore {
 
 let store: DrawStore | undefined
 export function getDrawStore() {
-  return store ??= new DrawStore(drizzle({ client: getDatabase(), paramsInErrors: false }))
+  if (store) return store
+  const client = getDatabase()
+  if (client.driver === 'serverless') {
+    // Drizzle rc.5 calls the HTTP client with SQL strings. Neon v1 accepts that
+    // form through .query(); direct calls now require tagged templates.
+    // Proxy the callable without losing Netlify's refreshed credentials or
+    // Neon's query/transaction helpers. WebSocket transactions are unchanged.
+    client.httpClient = new Proxy(client.httpClient, {
+      apply(target, thisArg, args) {
+        return typeof args[0] === 'string'
+          ? Reflect.apply(target.query, target, args)
+          : Reflect.apply(target, thisArg, args)
+      },
+    })
+  }
+  return store = new DrawStore(drizzle({ client, paramsInErrors: false }))
 }
