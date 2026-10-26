@@ -23,44 +23,45 @@ async function createDraw() {
 <template>
   <div class="setup-layout">
     <section class="intro">
-      <p class="eyebrow"><span class="tiny-star" aria-hidden="true">✦</span> GOOD GIFTS START WITH A LITTLE SECRET</p>
-      <h1>Eight names.<br>One lovely<br><em>surprise.</em></h1>
-      <p class="intro-copy">Bring your people together for a little festive mystery. Add eight names, share their personal links, and let the gifting begin.</p>
-      <div class="gift-scene" aria-hidden="true">
-        <span class="scene-spark spark-one">✧</span><span class="scene-spark spark-two">✦</span><span class="scene-spark spark-three">✧</span>
-        <div class="gift gift-back"><span class="gift-bow" /><span class="gift-lid" /><span class="gift-ribbon" /></div>
-        <div class="gift gift-front"><span class="gift-bow" /><span class="gift-lid" /><span class="gift-ribbon" /><span class="gift-tag">a little<br>something</span></div>
-        <span class="scene-note">a secret worth keeping <span>↗</span></span>
+      <p class="eyebrow hero-eyebrow"><span aria-hidden="true">✦</span> A SPECIAL DELIVERY FROM THE NORTH POLE</p>
+      <h1>Oh, what<br><em>fun it is</em><br>to give<span class="heading-star" aria-hidden="true">✷</span></h1>
+      <p class="intro-copy">Eight names. Eight thoughtful gifts. One gloriously Christmassy secret. Gather your favourite people and let the merry mischief begin.</p>
+      <div class="workshop-illustration">
+        <NorthPoleScene />
+        <span class="elf-seal" aria-hidden="true"><span>100%</span>ELF<br>APPROVED<span>✦ ✦ ✦</span></span>
       </div>
-      <div class="promise"><span class="promise-icon" aria-hidden="true">♡</span><p>Everyone gives. Everyone receives.<br><strong>No doubles. No picking yourself.</strong></p></div>
+      <div class="promise"><span class="promise-icon" aria-hidden="true">♡</span><p>Everyone gives. Everyone receives.<br><strong>No doubles. No picking yourself. Pure Christmas joy.</strong></p></div>
     </section>
 
     <section class="setup-card" aria-labelledby="setup-title">
-      <div class="card-topline"><span class="step-label">LET’S MAKE SOME MAGIC</span><span class="count-pill">8 PEOPLE</span></div>
+      <div class="card-ribbon" aria-hidden="true" />
+      <div class="card-topline"><span class="step-label">SANTA’S VERY GOOD LIST</span><span class="count-pill">✦ 8 PEOPLE</span></div>
       <h2 id="setup-title">Who’s in the circle?</h2>
-      <p class="muted">Add all eight names. We’ll take care of the secrets.</p>
+      <p class="muted">Round up the Christmas crew. We’ll handle the ho, ho, who.</p>
+      <div class="nice-list-progress" aria-hidden="true"><span v-for="n in 8" :key="n" :class="{ lit: names[n - 1]?.trim() }" :style="{ '--ornament-index': n }">{{ names[n - 1]?.trim() ? '✦' : '·' }}</span></div>
       <form @submit.prevent="createDraw">
         <label class="field-label" for="draw-title">GIVE YOUR DRAW A NAME</label>
         <input id="draw-title" v-model="title" class="title-input" maxlength="80" placeholder="Our Secret Santa" autocomplete="off">
-        <div class="names-heading"><span class="field-label">YOUR PEOPLE</span><span class="progress-caption">{{ entered }} of 8 added</span></div>
+        <div class="names-heading"><span class="field-label">THE NICE LIST</span><span class="progress-caption" role="status" aria-live="polite">{{ entered === 8 ? 'The whole merry gang! ✦' : `${entered} of 8 names added` }}</span></div>
         <div class="names-grid">
           <div v-for="(_, index) in names" :key="index" class="name-field" :class="{ 'is-filled': names[index]?.trim() }">
             <span class="name-number" aria-hidden="true">{{ String(index + 1).padStart(2, '0') }}</span>
             <label class="sr-only" :for="`name-${index}`">Person {{ index + 1 }}</label>
             <input :id="`name-${index}`" v-model="names[index]" :placeholder="placeholders[index]" required maxlength="40" autocomplete="off">
-            <span v-if="names[index]?.trim()" class="field-check" aria-hidden="true">✓</span>
+            <span v-if="names[index]?.trim()" class="field-check" aria-hidden="true">✦</span>
           </div>
         </div>
         <p v-if="error" class="error-message" role="alert">{{ error }}</p>
-        <button class="button primary create-button" type="submit" :disabled="busy || !complete"><span>{{ busy ? 'Making a little magic…' : 'Create our Secret Santa' }}</span><span aria-hidden="true">↗</span></button>
-        <p class="privacy-note"><span aria-hidden="true">♧</span> Personal links. Private picks. No accounts needed.</p>
+        <button class="button primary create-button" :class="{ 'ready-to-create': complete }" type="submit" :disabled="busy || !complete"><span>{{ busy ? 'The elves are on it…' : 'Create our Secret Santa' }}</span><span aria-hidden="true">✧</span></button>
+        <p class="privacy-note"><span aria-hidden="true">♧</span> Personal links. Private picks. Santa-level secrecy.</p>
       </form>
-      <div class="card-bottom"><span aria-hidden="true">✦</span> A good surprise is only a few names away.</div>
+      <div class="card-bottom"><span aria-hidden="true">✦</span> Checked twice. Sprinkled with Christmas magic.</div>
     </section>
     <section class="how-it-works" aria-label="How it works">
-      <div><span class="how-number">01</span><p><strong>Gather your people</strong><span>Eight names make the circle complete.</span></p></div>
-      <div><span class="how-number">02</span><p><strong>Pass on the secret</strong><span>Send everyone their own private link.</span></p></div>
-      <div><span class="how-number">03</span><p><strong>Make someone’s day</strong><span>Reveal a name. Find a thoughtful gift.</span></p></div>
+      <div><span class="how-number" aria-hidden="true">✎</span><p><span class="step-tiny">01 · MAKE A LIST</span><strong>Gather the merry gang</strong><span>Eight names. A whole lot of Christmas spirit.</span></p></div>
+      <div><span class="how-number" aria-hidden="true">✉</span><p><span class="step-tiny">02 · KEEP A SECRET</span><strong>Deliver a little mystery</strong><span>Send everyone their own personal invitation.</span></p></div>
+      <div><span class="how-number" aria-hidden="true">✧</span><p><span class="step-tiny">03 · SPREAD SOME JOY</span><strong>Make their Christmas</strong><span>Unwrap a name. Dream up the perfect gift.</span></p></div>
     </section>
+    <div class="christmas-ticker" aria-hidden="true"><div><span v-for="n in 2" :key="n">HO HO WHO? <i>✦</i> MERRY EVERYTHING <i>✦</i> A LITTLE MYSTERY, A LOT OF JOY <i>✦</i> KEEP THE SECRET, SPREAD THE CHEER <i>✦</i> </span></div></div>
   </div>
 </template>

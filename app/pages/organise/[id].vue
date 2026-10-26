@@ -25,25 +25,27 @@ async function copy(value: string, id: string) {
 <template>
   <div class="organiser-page">
     <NuxtLink to="/" class="back-link">← Create another draw</NuxtLink>
-    <div v-if="status === 'pending' || status === 'idle'" class="state-card" role="status">Gathering your circle…</div>
+    <div v-if="status === 'pending' || status === 'idle'" class="state-card loading-card" role="status"><span class="loading-snowflake" aria-hidden="true">❄</span> The elves are gathering your circle…</div>
     <div v-else-if="error" class="state-card"><span class="large-star">✧</span><h1>Let’s find your circle.</h1><p>{{ error.data?.statusMessage || 'We couldn’t load this draw. Try again.' }}</p><button class="button secondary" @click="refresh()">Try again</button></div>
     <template v-else-if="draw">
-      <div class="organiser-heading"><div><p class="eyebrow">THE CIRCLE IS COMPLETE <span aria-hidden="true">✦</span></p><h1>{{ draw.title }}</h1><p class="muted">Eight personal invitations. Eight little surprises waiting to happen.</p></div><span class="status-badge">{{ opened }} / 8 revealed</span></div>
+      <div class="organiser-heading"><div><p class="eyebrow">SIGNED, SEALED & SANTA-APPROVED <span aria-hidden="true">✦</span></p><h1>{{ draw.title }}</h1><p class="muted">The nice list is ready. Time to deliver eight little Christmas secrets.</p></div><span class="status-badge"><span aria-hidden="true">✦</span> {{ opened }} / 8 presents unwrapped</span></div>
       <div class="organiser-grid">
         <section class="invitations-card" aria-labelledby="invitations-title">
-          <div class="list-heading"><h2 id="invitations-title">Pass on the secret</h2><button class="text-button" @click="refresh()">Refresh status ↻</button></div>
+          <div class="card-ribbon" aria-hidden="true" />
+          <div class="list-heading"><h2 id="invitations-title">Santa’s special deliveries</h2><button class="text-button" @click="refresh()">Refresh status ↻</button></div>
           <p class="muted">Send each person only the link next to their name.</p>
           <ol class="invitation-list">
-            <li v-for="(person, index) in draw.participants" :key="person.token">
+            <li v-for="(person, index) in draw.participants" :key="person.token" :style="{ '--entry-index': index }">
               <span class="person-avatar" aria-hidden="true">{{ person.name.charAt(0).toLocaleUpperCase() }}</span>
-              <div class="person-info"><strong>{{ person.name }}</strong><span :class="{ 'has-opened': person.opened }">{{ person.opened ? 'Surprise revealed ✓' : 'A secret is waiting' }}</span></div>
+              <div class="person-info"><strong>{{ person.name }}</strong><span :class="{ 'has-opened': person.opened }">{{ person.opened ? 'Christmas secret unwrapped ✓' : 'One little surprise, still under wraps' }}</span></div>
               <button class="copy-button" @click="copy(invitation(person.name, person.token), person.token)">{{ copied === person.token ? 'Copied ✓' : 'Copy link ↗' }}<span class="sr-only"> for {{ person.name }}</span></button>
               <details class="manual-link"><summary>View {{ person.name }}’s invitation link</summary><input :aria-label="`Invitation link for ${person.name}`" :value="invitation(person.name, person.token)" readonly @focus="($event.target as HTMLInputElement).select()"></details>
             </li>
           </ol>
         </section>
         <aside class="organiser-aside">
-          <div class="save-card"><span class="large-star" aria-hidden="true">✧</span><p class="eyebrow">FOR YOUR EYES ONLY</p><h2>Keep the key<br>to your circle.</h2><p>This organiser link lets you return to these invitations and see who has revealed their name. Save it somewhere safe.</p><button class="button secondary" @click="copy(organiserLink, 'organiser')">{{ copied === 'organiser' ? 'Organiser link copied ✓' : 'Copy organiser link ↗' }}</button><details class="manual-link"><summary>View organiser link</summary><input aria-label="Organiser link" :value="organiserLink" readonly @focus="($event.target as HTMLInputElement).select()"></details></div>
+          <div class="save-card"><span class="large-star" aria-hidden="true">✧</span><p class="eyebrow">HEAD ELF EYES ONLY</p><h2>You’re the keeper<br>of the Christmas keys.</h2><p>This organiser link lets you return to these invitations and see who has revealed their name. Save it somewhere safe.</p><button class="button secondary" @click="copy(organiserLink, 'organiser')">{{ copied === 'organiser' ? 'Organiser link copied ✓' : 'Copy organiser link ↗' }}</button><details class="manual-link"><summary>View organiser link</summary><input aria-label="Organiser link" :value="organiserLink" readonly @focus="($event.target as HTMLInputElement).select()"></details></div>
+          <div class="organiser-scene"><NorthPoleScene /></div>
           <div class="quiet-note"><span aria-hidden="true">♡</span><p><strong>The best secrets stay secret.</strong>Each link reveals one person’s recipient. Keep the organiser link to yourself and ask everyone to keep their personal link private.</p></div>
         </aside>
       </div>

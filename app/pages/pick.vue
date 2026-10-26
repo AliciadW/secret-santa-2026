@@ -25,27 +25,30 @@ async function reveal() {
 
 <template>
   <div class="pick-page">
-    <div v-if="status === 'pending' || status === 'idle'" class="state-card" role="status">Finding your little surprise…</div>
+    <div v-if="status === 'pending' || status === 'idle'" class="state-card loading-card" role="status"><span class="loading-snowflake" aria-hidden="true">❄</span> A little Christmas magic is on its way…</div>
     <section v-else-if="error" class="state-card"><span class="large-star">✧</span><h1>A secret needs<br>its own key.</h1><p>{{ error.data?.statusMessage || 'We couldn’t load your invitation. Please try again.' }}</p><button class="button secondary" @click="refresh()">Try again</button></section>
-    <section v-else-if="invitation" class="reveal-card" :class="{ revealed: recipient }">
+    <section v-else-if="invitation" class="reveal-card" :class="{ revealed: recipient, unwrapping: busy }">
+      <div class="card-ribbon" aria-hidden="true" />
       <p class="eyebrow">{{ invitation.title }} <span aria-hidden="true">✦</span></p>
-      <template v-if="!recipient">
-        <h1>A little secret<br>for <em>{{ invitation.name }}.</em></h1>
-        <p class="reveal-intro">Someone in your circle is about to get very lucky.</p>
-        <div class="single-gift" aria-hidden="true"><div class="gift gift-front"><span class="gift-bow" /><span class="gift-lid" /><span class="gift-ribbon" /><span class="gift-tag">just<br>for you</span></div><span class="scene-spark">✧</span></div>
-        <p class="muted">{{ invitation.opened ? 'Your name is safely saved. Open it again whenever you need a reminder.' : 'Ready to find out who you’re gifting? Your name is waiting inside.' }}</p>
+      <div v-if="!recipient" class="present-state">
+        <h1>Ho, ho,<br><em>{{ invitation.name }}!</em></h1>
+        <p class="reveal-intro">There’s a little Christmas secret with your name on it.</p>
+        <ChristmasPresent />
+        <p class="muted">{{ invitation.opened ? 'Still the same lovely name. Unwrap it again for a little reminder.' : 'Someone’s Christmas is in your hands. Ready to find out whose?' }}</p>
         <button class="button primary" :disabled="busy" @click="reveal">{{ busy ? 'Opening your surprise…' : invitation.opened ? 'See my name again' : 'Reveal my Secret Santa name' }} <span aria-hidden="true">✧</span></button>
         <p class="privacy-note">This invitation belongs to {{ invitation.name }}. Keep your link private.</p>
-      </template>
-      <template v-else>
-        <div class="reveal-stars" aria-hidden="true">✧ &nbsp; ✦ &nbsp; ✧</div>
+      </div>
+      <div v-else class="recipient-state">
+        <div class="confetti-burst" aria-hidden="true"><span v-for="n in 32" :key="n" :style="{ '--confetti-x': `${(n * 47 % 100) - 50}vw`, '--confetti-y': `${-90 - n * 29 % 300}px`, '--confetti-spin': `${n * 73}deg`, '--confetti-delay': `${n % 6 * .04}s` }" /></div>
+        <div class="reveal-stars" aria-hidden="true"><span>✧</span><span>✦</span><span>✧</span></div>
         <p class="eyebrow">{{ invitation.name }}, YOU’RE GIFTING TO</p>
         <h1 class="recipient-name" aria-live="polite">{{ recipient }}</h1>
-        <p class="reveal-intro">A thoughtful gift. A happy little surprise.<br>Now the fun part is yours.</p>
-        <div class="recipient-note"><span aria-hidden="true">♡</span><p>Keep it between us.<br><strong>You’re their Secret Santa.</strong></p></div>
+        <p class="reveal-intro">Cue the sleigh bells.<br>You’re about to make their Christmas.</p>
+        <div class="recipient-note"><span aria-hidden="true">♡</span><p>Mum’s the word. Even to the reindeer.<br><strong>You’re their Secret Santa.</strong></p></div>
         <p class="muted">Your pick is saved. Come back to this personal link any time for a reminder.</p>
         <button class="button secondary" @click="recipient = ''">Hide my name</button>
-      </template>
+        <p class="reveal-signoff">With love from the North Pole <span aria-hidden="true">✦</span></p>
+      </div>
       <p v-if="revealError" class="error-message" role="alert">{{ revealError }}</p>
     </section>
   </div>
