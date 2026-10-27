@@ -1,0 +1,1 @@
+ALTER TABLE "participants" DROP CONSTRAINT "participants_position_range", ADD CONSTRAINT "participants_position_range" CHECK ("position" >= 0 AND "position" < 50);

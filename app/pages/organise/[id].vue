@@ -28,7 +28,7 @@ async function copy(value: string, id: string) {
     <div v-if="status === 'pending' || status === 'idle'" class="state-card loading-card" role="status"><span class="loading-snowflake" aria-hidden="true">❄</span> The elves are gathering your circle…</div>
     <div v-else-if="error" class="state-card"><span class="large-star">✧</span><h1>Let’s find your circle.</h1><p>{{ error.data?.statusMessage || 'We couldn’t load this draw. Try again.' }}</p><button class="button secondary" @click="refresh()">Try again</button></div>
     <template v-else-if="draw">
-      <div class="organiser-heading"><div><p class="eyebrow">SIGNED, SEALED & SANTA-APPROVED <span aria-hidden="true">✦</span></p><h1>{{ draw.title }}</h1><p class="muted">The nice list is ready. Time to deliver eight little Christmas secrets.</p></div><span class="status-badge"><span aria-hidden="true">✦</span> {{ opened }} / 8 presents unwrapped</span></div>
+      <div class="organiser-heading"><div><p class="eyebrow">SIGNED, SEALED & SANTA-APPROVED <span aria-hidden="true">✦</span></p><h1>{{ draw.title }}</h1><p class="muted">The nice list is ready. Time to deliver {{ draw.participants.length }} little Christmas secrets.</p></div><span class="status-badge"><span aria-hidden="true">✦</span> {{ opened }} / {{ draw.participants.length }} presents unwrapped</span></div>
       <div class="organiser-grid">
         <section class="invitations-card" aria-labelledby="invitations-title">
           <div class="card-ribbon" aria-hidden="true" />

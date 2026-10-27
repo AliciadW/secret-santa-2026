@@ -45,7 +45,7 @@ test('production app serves pages, enforces credentials, and reveals one stable 
     assert.equal(home.headers.get('referrer-policy'), 'no-referrer')
     const names = ['Alicia', 'Ben', 'Cara', 'Daniel', 'Emma', 'Finn', 'Grace', 'Hugo']
     const postDraw = body => fetch(`${base}/api/draws`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) })
-    assert.equal((await postDraw({ names: names.slice(1) })).status, 400)
+    assert.equal((await postDraw({ names: names.slice(0, 1) })).status, 400)
     assert.equal((await postDraw({ names: ['ben', ...names.slice(1)] })).status, 400)
     assert.equal((await postDraw({ names, title: 'a'.repeat(9000) })).status, 413)
     const response = await postDraw({ names })
@@ -58,7 +58,7 @@ test('production app serves pages, enforces credentials, and reveals one stable 
     const adminResponse = await fetch(adminPath, { headers: auth(draw.adminKey) })
     assert.equal(adminResponse.status, 200)
     const admin = await adminResponse.json()
-    assert.equal(admin.participants.length, 8)
+    assert.equal(admin.participants.length, names.length)
     assert.equal(JSON.stringify(admin).includes('recipient'), false)
     assert.equal((await fetch(`${base}/organise/${draw.id}?key=${draw.adminKey}`)).status, 200)
     assert.equal((await fetch(`${base}/pick?name=Alicia&token=${admin.participants[0].token}`)).status, 200)

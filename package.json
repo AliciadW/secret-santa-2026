@@ -23,6 +23,7 @@
   "devDependencies": {
     "@electric-sql/pglite": "^0.5.11",
     "@electric-sql/pglite-socket": "^0.2.14",
+    "@netlify/database-dev": "^1.0.1",
     "@types/node": "^22.10.0",
     "drizzle-kit": "^1.0.0-rc.5",
     "tsx": "^4.20.6",

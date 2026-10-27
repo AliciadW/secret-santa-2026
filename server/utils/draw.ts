@@ -1,4 +1,5 @@
 import { randomInt } from 'node:crypto'
+import { MIN_PARTICIPANTS, MAX_PARTICIPANTS } from '../../shared/utils/participants'
 
 export class DrawError extends Error {
   constructor(public statusCode: number, message: string) {
@@ -7,10 +8,10 @@ export class DrawError extends Error {
 }
 
 export function validateDraw(input: unknown): { title: string; names: string[] } {
-  if (!input || typeof input !== 'object') throw new DrawError(400, 'Please enter eight names.')
+  if (!input || typeof input !== 'object') throw new DrawError(400, 'Please enter the participants’ names.')
   const body = input as Record<string, unknown>
-  if (!Array.isArray(body.names) || body.names.length !== 8) {
-    throw new DrawError(400, 'Your draw needs exactly eight people.')
+  if (!Array.isArray(body.names) || body.names.length < MIN_PARTICIPANTS || body.names.length > MAX_PARTICIPANTS) {
+    throw new DrawError(400, `Your draw needs between ${MIN_PARTICIPANTS} and ${MAX_PARTICIPANTS} people.`)
   }
   const names = body.names.map((name) => {
     if (typeof name !== 'string') throw new DrawError(400, 'Every person needs a name.')
@@ -20,7 +21,7 @@ export function validateDraw(input: unknown): { title: string; names: string[] }
     }
     return clean
   })
-  if (new Set(names.map(name => name.toLocaleLowerCase('en-GB'))).size !== 8) {
+  if (new Set(names.map(name => name.toLocaleLowerCase('en-GB'))).size !== names.length) {
     throw new DrawError(400, 'Each name must be different. Add a surname or initial if needed.')
   }
   if (body.title !== undefined && typeof body.title !== 'string') throw new DrawError(400, 'Please use a valid draw name.')

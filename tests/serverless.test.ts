@@ -16,7 +16,7 @@ test('Netlify serverless HTTP lookups and reveals use Neon v1 query calls', asyn
     // Creation already uses a transaction over the pool. Seed via the Postgres
     // driver, then exercise the real Netlify/Neon HTTP driver for reads/writes.
     const writer = new DrawStore(drizzle({ client: database }))
-    const names = ['Alicia', 'Ben', 'Cara', 'Daniel', 'Emma', 'Finn', 'Grace', 'Hugo']
+    const names = ['Alicia', 'Ben', 'Cara', 'Daniel', 'Emma', 'Finn', 'Grace', 'Hugo', 'Ivy', 'Jack', 'Kelly', 'Leo']
     const draw = await writer.create({ names })
     process.env.NETLIFY_DB_DRIVER = 'serverless'
     process.env.NETLIFY_DB_URL = 'postgresql://test:test@database.example/test'
