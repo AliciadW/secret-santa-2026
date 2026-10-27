@@ -12,9 +12,29 @@ const trees = [{ x: 35, y: 213, scale: .65 }, { x: 95, y: 190, scale: .85 }, { x
       <circle cx="310" cy="196" r="167" :fill="`url(#${glow})`" />
       <g class="scene-moon"><path d="M514 39a29 29 0 1 0 29 38 29 29 0 0 1-29-38Z" fill="#ffcf37" /><circle cx="498" cy="65" r="2" fill="#d6b974" opacity=".6" /></g>
       <g fill="#ffbf19" class="scene-stars"><path d="m121 55 3 8 8 3-8 3-3 8-3-8-8-3 8-3Zm283-27 2 6 6 2-6 2-2 6-2-6-6-2 6-2ZM564 123l2 6 6 2-6 2-2 6-2-6-6-2 6-2Z" /><circle cx="217" cy="51" r="2" /><circle cx="441" cy="103" r="2" /><circle cx="77" cy="139" r="1.5" /><circle cx="347" cy="31" r="1.5" /><circle cx="601" cy="73" r="1.5" /></g>
-      <g class="santa-sleigh" stroke="#e51e3e" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M194 95c23-6 32-8 51-6m13-4 17-4m-13 1-4-9m6 9 2-9m7 8 4 8m-8-9 5-8m-5 0-3-6m3 6 5-4" stroke-width="2" />
-        <path d="m175 91 7 10h23l7-9m-36 16h35q7 0 9-6" stroke-width="3" /><path d="M184 92v-8h12l5 9" fill="#e51e3e" stroke="#e51e3e" stroke-width="3" /><circle cx="192" cy="79" r="5" fill="#f3d9b1" stroke="none" /><path d="m187 75 6-10 5 11Z" fill="#ef2342" stroke="none" />
+      <g class="santa-sleigh" stroke-linecap="round" stroke-linejoin="round">
+        <!-- Solid, simple silhouettes stay recognisable when the scene is small. -->
+        <path d="M219 76q24-1 50-8m-50 11q23 5 53-4" stroke="#b77b22" stroke-width="1.8" />
+        <path d="m260 68-8-6 2 10Z" fill="#98532f" />
+        <ellipse cx="277" cy="72" rx="18" ry="9" fill="#a85d34" />
+        <path d="m286 70 8-16q2-6 8-5l9 5 1 5-11 4-6 15Z" fill="#a85d34" />
+        <path d="m298 51-8-9 9 3m2 7 5-10 5 2" fill="#a85d34" />
+        <path d="m298 46-2-12m1 7-6-4m11 10 5-11m-3 6 7-2" stroke="#874728" stroke-width="2.5" />
+        <path d="m264 77 11 10m-4-7 11 10m3-11 12 9m-5-12 12 8" stroke="#874728" stroke-width="3.4" />
+        <path d="m279 64-3 16m17-18 8 3" stroke="#ed2142" stroke-width="4" />
+        <circle cx="307" cy="55" r="1.3" fill="#3c261e" /><circle cx="313" cy="57" r="2.3" fill="#ed2142" />
+        <path d="M182 72q-12 2-12 15h26q2-17-10-16l-3-5-5 3Z" fill="#009450" />
+        <path d="M192 89V77q0-8 10-8 12 0 13 15l8 3-3 6Z" fill="#ed2142" />
+        <path d="M210 88h13v6h-16Z" fill="#253d32" />
+        <circle cx="204" cy="63" r="8" fill="#ffceb0" />
+        <path d="M196 64q-3 11 8 16 12-6 8-16l-4 4h-8Z" fill="#fff" />
+        <path d="m195 58 6-16q12 0 17 13l-12-4-3 8Z" fill="#ed2142" />
+        <path d="M195 58h17" stroke="#fff" stroke-width="5" /><circle cx="219" cy="55" r="4" fill="#fff" />
+        <circle cx="208" cy="63" r="1" fill="#3c261e" />
+        <path d="m209 76 11-3" stroke="#ed2142" stroke-width="7" /><circle cx="222" cy="73" r="4" fill="#ffceb0" />
+        <path d="M171 88q5 14 22 14h26q16 0 20-20l-8 1q-4 10-13 10h-25q-9 0-12-9Z" fill="#ed2142" />
+        <path d="M174 88q7 8 18 8h27q11 0 16-11" stroke="#ffdc57" stroke-width="2.4" />
+        <path d="m185 102-3 7m40-7 3 7m-55 0h63q14 0 15-12" stroke="#d8a128" stroke-width="3.8" />
       </g>
       <path d="M2 303c97-45 168-19 250-17 117 2 219-53 386-2v48H2Z" fill="#80d6aa" />
       <path d="M12 313c116-26 183-7 270-8 114-1 215-29 346-6v24c-112-10-207 15-320 16-128 1-220-20-296-4Z" fill="#ffffff" />
@@ -30,7 +50,7 @@ const trees = [{ x: 35, y: 213, scale: .65 }, { x: 95, y: 190, scale: .85 }, { x
         <rect x="270" y="216" width="39" height="41" rx="3" fill="#ffdb3b" class="cabin-window" /><path d="M289 216v41m-19-21h39" stroke="#cf243c" stroke-width="4" /><rect x="379" y="216" width="35" height="41" rx="3" fill="#ffdb3b" class="cabin-window" /><path d="M396 216v41m-17-21h35" stroke="#cf243c" stroke-width="4" />
         <path d="M323 235a19 19 0 0 1 38 0v64h-38Z" fill="#008a4b" /><path d="M318 299h49" stroke="#ffffff" stroke-width="7" stroke-linecap="round" /><circle cx="352" cy="268" r="2" fill="#eac780" />
         <circle cx="342" cy="244" r="10" stroke="#00ad5d" stroke-width="7" /><path d="m337 251 5-4 5 4-2 6-3-5-4 5Z" fill="#f32949" />
-        <rect x="298" y="190" width="88" height="16" rx="2" fill="#ffffff" /><text x="342" y="201" fill="#704f37" font-family="Georgia,serif" font-size="7" letter-spacing="1.6" text-anchor="middle">SANTA’S WORKSHOP</text>
+        <rect x="287" y="190" width="110" height="17" rx="3" fill="#ffffff" /><text x="342" y="201.5" fill="#704f37" font-family="Georgia,serif" font-size="7" font-weight="600" text-anchor="middle" textLength="94" lengthAdjust="spacingAndGlyphs">SANTA’S WORKSHOP</text>
       </g>
       <g class="main-christmas-tree">
         <path d="M164 258h13v52h-13Z" fill="#997249" /><path d="m171 107 33 55h-14l32 48h-20l40 63H99l40-63h-20l32-48h-14Z" fill="#009553" /><path d="m171 107 15 26-16-5-13 6Zm-27 55 25-4 27 4 8 13-34-5-34 6Zm-29 57 53-9 56 9 9 14-62-11-65 12Z" fill="#ffffff" />

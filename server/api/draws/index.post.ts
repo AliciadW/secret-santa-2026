@@ -6,7 +6,7 @@ export default defineEventHandler(async (event) => {
   // H3 supports both Node streams and the Web Request body supplied by Netlify.
   const rawBody = await readRawBody(event, false)
   if (rawBody && rawBody.byteLength > 8192) {
-    throw createError({ statusCode: 413, statusMessage: 'This draw is too large. Please use eight short names.' })
+    throw createError({ statusCode: 413, statusMessage: 'This draw is too large. Please use shorter names.' })
   }
   let body: unknown
   try {

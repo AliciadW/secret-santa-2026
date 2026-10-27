@@ -1,0 +1,38 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "70e2a7dd-bb5f-47d4-bcad-fb5fecac6f15",
+  "prevIds": [
+    "59072678-fdc6-4c94-8355-4d983b243e22"
+  ],
+  "footprints": [
+    {
+      "statementType": "alter_check",
+      "statementTarget": [
+        "table",
+        "public",
+        "participants"
+      ],
+      "writes": [
+        "s|ck|public.participants.participants_position_range"
+      ],
+      "reads": [
+        "n|tbl|public.participants",
+        "n|sch|public",
+        "n|col|public.participants.position",
+        "e|col|public.participants.position"
+      ],
+      "sqlHash": "f9b84ebb39ea3a26"
+    }
+  ],
+  "deltas": [
+    {
+      "op": "alter",
+      "key": "checks\u0000[\"public\",\"participants\",\"participants_position_range\"]",
+      "set": {
+        "value": "\"position\" >= 0 AND \"position\" < 50"
+      }
+    }
+  ]
+}

@@ -1,5 +1,6 @@
 import { sql } from 'drizzle-orm'
 import { check, foreignKey, integer, pgTable, text, timestamp, unique } from 'drizzle-orm/pg-core'
+import { MAX_PARTICIPANTS } from '../shared/utils/participants'
 
 export const draws = pgTable('draws', {
   id: text('id').primaryKey(),
@@ -23,7 +24,7 @@ export const participants = pgTable('participants', {
   unique('participants_draw_id_recipient_id_unique').on(table.drawId, table.recipientId),
   unique('participants_draw_id_position_unique').on(table.drawId, table.position),
   check('participants_no_self_assignment', sql`${table.id} <> ${table.recipientId}`),
-  check('participants_position_range', sql`${table.position} >= 0 AND ${table.position} < 8`),
+  check('participants_position_range', sql`${table.position} >= 0 AND ${table.position} < ${sql.raw(String(MAX_PARTICIPANTS))}`),
   foreignKey({
     name: 'participants_recipient_same_draw_fk',
     columns: [table.drawId, table.recipientId],

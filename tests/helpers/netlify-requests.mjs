@@ -5,10 +5,11 @@ import handler from '../../.netlify/functions-internal/server/main.mjs'
 // before the parent shuts down the temporary Postgres server.
 const request = (path, options) => handler(new Request(`https://secret-santa.example${path}`, options))
 const post = body => request('/api/draws', { method: 'POST', headers: { 'content-type': 'application/json' }, body })
-const names = ['Alicia', 'Ben', 'Cara', 'Daniel', 'Emma', 'Finn', 'Grace', 'Hugo']
+const names = ['Alicia', 'Ben', 'Cara', 'Daniel', 'Emma', 'Finn', 'Grace', 'Hugo', 'Ivy', 'Jack', 'Kelly', 'Leo']
 assert.equal((await post('{')).status, 400)
 assert.equal((await post('')).status, 400)
-assert.equal((await post(JSON.stringify({ names: names.slice(1) }))).status, 400)
+assert.equal((await post(JSON.stringify({ names: names.slice(0, 1) }))).status, 400)
+assert.equal((await post(JSON.stringify({ names: names.slice(0, 2) }))).status, 200)
 assert.equal((await post(JSON.stringify({ names: ['ben', ...names.slice(1)] }))).status, 400)
 assert.equal((await post(JSON.stringify({ names, title: 'a'.repeat(9000) }))).status, 413)
 // Check byte length rather than character count for Unicode payloads too.

@@ -1,14 +1,17 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { makeAssignments, validateDraw } from '../server/utils/draw'
+import { MIN_PARTICIPANTS, MAX_PARTICIPANTS } from '../shared/utils/participants'
 
 const names = ['Alicia', 'Ben', 'Cara', 'Daniel', 'Emma', 'Finn', 'Grace', 'Hugo']
 
-test('1,000 draws always give every person one unique recipient and never themselves', () => {
+test('1,000 draws across different group sizes give everyone one unique recipient and never themselves', () => {
+  const sizes = [MIN_PARTICIPANTS, 3, 7, 8, 12, MAX_PARTICIPANTS]
   for (let i = 0; i < 1000; i++) {
-    const assignments = makeAssignments(8)
-    assert.equal(assignments.length, 8)
-    assert.deepEqual([...assignments].sort(), [0, 1, 2, 3, 4, 5, 6, 7])
+    const size = sizes[i % sizes.length]!
+    const assignments = makeAssignments(size)
+    assert.equal(assignments.length, size)
+    assert.deepEqual([...assignments].sort((a, b) => a - b), Array.from({ length: size }, (_, index) => index))
     assert.ok(assignments.every((recipient, giver) => recipient !== giver))
   }
 })
@@ -18,8 +21,12 @@ test('two people can draw one another and impossible group sizes fail', () => {
   for (const size of [0, 1, -1, 2.5, NaN]) assert.throws(() => makeAssignments(size))
 })
 
-test('validation requires exactly eight distinct, nonempty names', () => {
-  for (const invalid of [undefined, null, {}, { names: names.slice(1) }, { names: [...names, 'Ivy'] }, { names: ['', ...names.slice(1)] }, { names: [42, ...names.slice(1)] }, { names: ['ben', ...names.slice(1)] }, { names: ['A'.repeat(41), ...names.slice(1)] }, { names, title: 42 }, { names, title: 'A'.repeat(81) }]) {
+test('validation accepts configurable groups and rejects invalid counts or names', () => {
+  for (const size of [MIN_PARTICIPANTS, 3, 7, 8, 9, 25, MAX_PARTICIPANTS]) {
+    const group = Array.from({ length: size }, (_, index) => `Person ${index + 1}`)
+    assert.deepEqual(validateDraw({ names: group }).names, group)
+  }
+  for (const invalid of [undefined, null, {}, { names: [] }, { names: ['Alicia'] }, { names: 'Alicia' }, { names: Array.from({ length: MAX_PARTICIPANTS + 1 }, (_, index) => `Person ${index}`) }, { names: ['', ...names.slice(1)] }, { names: [42, ...names.slice(1)] }, { names: ['ben', ...names.slice(1)] }, { names: ['A'.repeat(41), ...names.slice(1)] }, { names, title: 42 }, { names, title: 'A'.repeat(81) }]) {
     assert.throws(() => validateDraw(invalid))
   }
 })

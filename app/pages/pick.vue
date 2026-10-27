@@ -29,13 +29,15 @@ async function reveal() {
     <section v-else-if="error" class="state-card"><span class="large-star">✧</span><h1>A secret needs<br>its own key.</h1><p>{{ error.data?.statusMessage || 'We couldn’t load your invitation. Please try again.' }}</p><button class="button secondary" @click="refresh()">Try again</button></section>
     <section v-else-if="invitation" class="reveal-card" :class="{ revealed: recipient, unwrapping: busy }">
       <div class="card-ribbon" aria-hidden="true" />
+      <div class="delivery-stamp" aria-hidden="true"><span>✦</span>NORTH POLE<br><strong>EXPRESS</strong></div>
       <p class="eyebrow">{{ invitation.title }} <span aria-hidden="true">✦</span></p>
       <div v-if="!recipient" class="present-state">
-        <h1>Ho, ho,<br><em>{{ invitation.name }}!</em></h1>
-        <p class="reveal-intro">There’s a little Christmas secret with your name on it.</p>
+        <p class="delivery-label">FOR YOUR EYES ONLY</p>
+        <h1>Special delivery,<br><em>{{ invitation.name }}.</em></h1>
+        <p class="reveal-intro">A secret name. A little merry mischief.<br>This Christmas surprise is just for you.</p>
         <ChristmasPresent />
         <p class="muted">{{ invitation.opened ? 'Still the same lovely name. Unwrap it again for a little reminder.' : 'Someone’s Christmas is in your hands. Ready to find out whose?' }}</p>
-        <button class="button primary" :disabled="busy" @click="reveal">{{ busy ? 'Opening your surprise…' : invitation.opened ? 'See my name again' : 'Reveal my Secret Santa name' }} <span aria-hidden="true">✧</span></button>
+        <button class="button primary" :disabled="busy" @click="reveal">{{ busy ? 'Opening your surprise…' : invitation.opened ? 'See my name again' : 'Unwrap my Christmas secret' }} <span aria-hidden="true">✧</span></button>
         <p class="privacy-note">This invitation belongs to {{ invitation.name }}. Keep your link private.</p>
       </div>
       <div v-else class="recipient-state">
@@ -43,7 +45,7 @@ async function reveal() {
         <div class="reveal-stars" aria-hidden="true"><span>✧</span><span>✦</span><span>✧</span></div>
         <p class="eyebrow">{{ invitation.name }}, YOU’RE GIFTING TO</p>
         <h1 class="recipient-name" aria-live="polite">{{ recipient }}</h1>
-        <p class="reveal-intro">Cue the sleigh bells.<br>You’re about to make their Christmas.</p>
+        <p class="reveal-intro">Your Christmas mission? Make them smile.<br>A little thoughtfulness goes a very merry way.</p>
         <div class="recipient-note"><span aria-hidden="true">♡</span><p>Mum’s the word. Even to the reindeer.<br><strong>You’re their Secret Santa.</strong></p></div>
         <p class="muted">Your pick is saved. Come back to this personal link any time for a reminder.</p>
         <button class="button secondary" @click="recipient = ''">Hide my name</button>

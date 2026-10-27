@@ -1,31 +1,24 @@
 # The Secret Santa Club
 
-A Nuxt 4 app for an eight-person Secret Santa draw. Enter eight names, share personal invitations, and let each participant reveal their recipient.
+A Nuxt 4 app for a Secret Santa draw with 2–50 people. Choose the group size, enter the names, share personal invitations, and let each participant reveal their recipient.
 
 ## Run locally
 
-Use Node.js 22.14 or newer. Install dependencies, link this folder to the existing Netlify site, and start Netlify's local development environment:
+Use Node.js 22.14 or newer, then:
 
 ```sh
 npm install
-npx netlify link
-npx netlify dev
+npm run dev
 ```
 
-Netlify Dev starts the Nuxt dev server and provides a local Postgres database. In a second terminal, apply the migrations to that local database:
+Open `http://localhost:3000`. When no database connection is configured, Nuxt development mode starts Netlify's local Postgres emulator, applies the committed migrations, and stores development draws in the ignored `.netlify/local-postgres` directory. Draws survive dev-server restarts. This database is separate from the live site and needs no account or production credentials.
 
-```sh
-npx netlify database migrations apply
-```
+If you use `netlify dev` or supply your own `NETLIFY_DB_URL`, that connection is used instead. The app does not run migrations automatically against supplied connections; use the appropriate local migration tooling. For a normal local Postgres server, set `NETLIFY_DB_DRIVER=server` as well (see `.env.example`). Production continues using Netlify's managed database and deployment-time migrations.
 
-Open the local address printed by Netlify Dev. The local database is separate from production. No external database account or manually copied production credentials are needed.
-
-If you already run your own local Postgres database, set `NETLIFY_DB_URL` and `NETLIFY_DB_DRIVER=server` in an ignored `.env` file (see `.env.example`), apply the SQL migrations to that local database, and use `npm run dev` directly.
-
-1. Enter a draw title and exactly eight unique names.
+1. Enter a draw title, choose the number of participants (2–50), and enter a unique name for each person. Changing the count preserves names you already entered if you increase it again.
 2. Create the draw and save the private organiser URL. It is the only way to return to the invitations.
 3. Send each participant their own invitation link.
-4. Each person opens their link and presses **Reveal my Secret Santa name**. They can revisit it for a reminder; a reveal never generates a new assignment.
+4. Each person opens their link and presses **Unwrap my Christmas secret**. They can revisit it for a reminder; a reveal never generates a new assignment.
 
 ## Personal links
 
@@ -41,9 +34,9 @@ The organiser screen shows reveal status, without displaying pairings. Links do 
 
 ## Draw rules and persistence
 
-All eight assignments are generated and saved in one Postgres transaction before any participant picks. A cryptographically random Fisher–Yates shuffle is repeated until no one is assigned themselves. Every valid permutation has the same probability. Every name appears exactly once as a recipient, and the draw cannot get stuck on the last participant. Database constraints reject self-assignments, duplicate names, tokens and recipients, and recipients from another draw. Mutual pairs are allowed. Repeated or concurrent reveals preserve both the pairing and the first reveal timestamp.
+All assignments are generated and saved in one Postgres transaction before any participant picks. A cryptographically random Fisher–Yates shuffle is repeated until no one is assigned themselves. Every valid permutation has the same probability. Every name appears exactly once as a recipient, and the draw cannot get stuck on the last participant. Database constraints reject self-assignments, duplicate names, tokens and recipients, and recipients from another draw. Mutual pairs are allowed. Repeated or concurrent reveals preserve both the pairing and the first reveal timestamp.
 
-Storage uses [Netlify Database](https://docs.netlify.com/build/data-and-storage/netlify-database/) (managed Postgres) through `@netlify/database` and Drizzle ORM. The connection is resolved at runtime, and importing the app or building it does not connect to the database. Names, private invitation tokens, and pairings remain server-side. The organiser's original name order is preserved with an explicit position column.
+Storage uses [Netlify Database](https://docs.netlify.com/build/data-and-storage/netlify-database/) (managed Postgres) through `@netlify/database` and Drizzle ORM. The connection is resolved at runtime, and importing the app or building it does not connect to the database. Names, private invitation tokens, and pairings remain server-side. The organiser's original name order is preserved with an explicit position column. Participant bounds and the initial group size are defined in `shared/utils/participants.ts`.
 
 ## Deploy to Netlify
 
@@ -53,7 +46,7 @@ Installing `@netlify/database` lets Netlify provision and configure the site's P
 
 The schema is defined in `db/schema.ts`. After a future schema change, run `npm run db:generate` and commit the newly generated migration and snapshot. Keep deployed migration files unchanged; create a new migration for subsequent changes. Drizzle ORM and Kit use matching release-candidate versions because the native Netlify Database adapter is not available in Drizzle's current stable release.
 
-There is no existing application data to migrate for this change. New draws persist in Netlify Database across function instances and redeployments. Production connection details are supplied by Netlify; never commit them to Git. Serve over HTTPS and avoid logging full invitation URLs.
+The participant-count migration expands the position constraint without changing existing draws, recipients, invitations, or reveal status. New draws persist in Netlify Database across function instances and redeployments. Production connection details are supplied by Netlify; never commit them to Git. Serve over HTTPS and avoid logging full invitation URLs.
 
 ## Verify and build
 
@@ -78,6 +71,6 @@ This test invokes the generated Netlify function with Web `Request` objects and 
 
 The UI uses Google Fonts with local serif/sans-serif fallbacks and contains no analytics or third-party JavaScript. Private page and API responses use `no-store` and `no-referrer` headers.
 
-Tests apply the exact committed SQL migration to isolated PGlite Postgres engines. They cover the eight-person rules across 1,000 draws, input normalisation and duplicates, invalid credentials, separate draws, repeat and concurrent reveals, SQL constraints, transaction rollback, asynchronous API errors, and persistence across database restart. No live database or Netlify credentials are used. The production test starts the built Node server and a temporary Postgres protocol server, then checks pages, API validation, credentials, privacy headers, name tampering, and concurrent reveals through the real Netlify Database/Drizzle connection path.
+Tests apply the exact committed SQL migration to isolated PGlite Postgres engines. They cover the draw rules across 1,000 draws of varying sizes, groups of 2–50, and migration of existing draws, input normalisation and duplicates, invalid credentials, separate draws, repeat and concurrent reveals, SQL constraints, transaction rollback, asynchronous API errors, and persistence across database restart. No live database or Netlify credentials are used. The production test starts the built Node server and a temporary Postgres protocol server, then checks pages, API validation, credentials, privacy headers, name tampering, and concurrent reveals through the real Netlify Database/Drizzle connection path.
 
 The serverless regression test exercises Netlify's HTTP database driver as well as the local Postgres driver. It uses Neon's real request encoding and response parsing with an isolated Postgres transport. The store adapts Drizzle rc.5's conventional SQL-string calls to Neon v1's `.query()` API while preserving Netlify's credential refresh and transaction pool.

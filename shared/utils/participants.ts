@@ -1,0 +1,3 @@
+export const MIN_PARTICIPANTS = 2
+export const MAX_PARTICIPANTS = 50
+export const DEFAULT_PARTICIPANT_COUNT = 8

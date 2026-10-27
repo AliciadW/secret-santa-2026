@@ -1,12 +1,13 @@
 import assert from 'node:assert/strict'
-import { mkdtemp, rm } from 'node:fs/promises'
+import { mkdtemp, readFile, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import test, { after, before, beforeEach } from 'node:test'
-import type { PGlite } from '@electric-sql/pglite'
+import { PGlite } from '@electric-sql/pglite'
 import { drizzle } from 'drizzle-orm/pglite'
 import { DrawStore } from '../server/utils/store'
 import { createTestPostgres } from './helpers/postgres.mjs'
+import { MAX_PARTICIPANTS } from '../shared/utils/participants'
 
 const names = ['Alicia', 'Ben', 'Cara', 'Daniel', 'Emma', 'Finn', 'Grace', 'Hugo']
 let client: PGlite
@@ -20,21 +21,43 @@ beforeEach(async () => { await client.exec('TRUNCATE participants, draws') })
 after(async () => { await client?.close() })
 
 test('every invitation reveals one unique recipient, and repeating never redraws', async () => {
-  const draw = await store.create({ names })
-  const admin = await store.organiser(draw.id, draw.adminKey)
-  assert.deepEqual(admin.participants.map(person => person.name), names)
-  const recipients = []
-  for (const person of admin.participants) {
-    assert.deepEqual(await store.invitation(person.token), { name: person.name, title: 'Our Secret Santa', opened: false })
-    assert.equal('recipient' in person, false)
-    const result = await store.reveal(person.token)
-    recipients.push(result.recipient)
-    assert.notEqual(result.recipient, person.name)
-    assert.deepEqual(await store.reveal(person.token), result)
-    assert.equal((await store.invitation(person.token)).opened, true)
+  for (const size of [2, 3, 8, 12, MAX_PARTICIPANTS]) {
+    const names = Array.from({ length: size }, (_, index) => `Person ${index + 1}`)
+    const draw = await store.create({ names })
+    const admin = await store.organiser(draw.id, draw.adminKey)
+    assert.deepEqual(admin.participants.map(person => person.name), names)
+    const recipients = []
+    for (const person of admin.participants) {
+      assert.deepEqual(await store.invitation(person.token), { name: person.name, title: 'Our Secret Santa', opened: false })
+      assert.equal('recipient' in person, false)
+      const result = await store.reveal(person.token)
+      recipients.push(result.recipient)
+      assert.notEqual(result.recipient, person.name)
+      assert.deepEqual(await store.reveal(person.token), result)
+      assert.equal((await store.invitation(person.token)).opened, true)
+    }
+    assert.deepEqual(recipients.sort(), [...names].sort())
+    assert.ok((await store.organiser(draw.id, draw.adminKey)).participants.every(person => person.opened))
   }
-  assert.deepEqual(recipients.sort(), [...names].sort())
-  assert.ok((await store.organiser(draw.id, draw.adminKey)).participants.every(person => person.opened))
+})
+
+test('the count migration preserves existing draws and permits larger groups', async () => {
+  const database = await PGlite.create()
+  try {
+    await database.exec(await readFile(new URL('../netlify/database/migrations/20261025153102_create_secret_santa/migration.sql', import.meta.url), 'utf8'))
+    const oldStore = new DrawStore(drizzle({ client: database }))
+    const draw = await oldStore.create({ names })
+    const before = await oldStore.organiser(draw.id, draw.adminKey)
+    const token = before.participants[0]!.token
+    const revealed = await oldStore.reveal(token)
+    await database.exec(await readFile(new URL('../netlify/database/migrations/20261026081108_configurable_participants/migration.sql', import.meta.url), 'utf8'))
+    const after = await oldStore.organiser(draw.id, draw.adminKey)
+    assert.deepEqual(after.participants.map(person => person.token), before.participants.map(person => person.token))
+    assert.equal(after.participants[0]!.opened, true)
+    assert.deepEqual(await oldStore.reveal(token), revealed)
+    const larger = await oldStore.create({ names: Array.from({ length: 12 }, (_, index) => `Guest ${index + 1}`) })
+    assert.equal((await oldStore.organiser(larger.id, larger.adminKey)).participants.length, 12)
+  } finally { await database.close() }
 })
 
 test('invalid tokens and organiser credentials cannot access a draw', async () => {
