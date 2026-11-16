@@ -431,3 +431,14 @@ em { font-weight: inherit; }
   .christmas-present { transform: scale(.88); margin-inline: -3px; }
   .recipient-name { font-size: 51px; }
 }
+
+.participant-fields { min-width: 0; }
+.email-label { display: block; font-size: 12px; color: var(--green); margin: 10px 0 5px; }
+.email-input { width: 100%; min-width: 0; padding: 10px 12px; border: 1px solid #acd8cc; border-radius: 8px; background: white; font: inherit; font-size: 13px; }
+.remove-person { margin: 7px 0 12px; }
+.remove-person:disabled { opacity: .4; cursor: default; }
+.email-help { font-size: 12px; margin: 12px 0; }
+.person-info { overflow-wrap: anywhere; }
+
+.nice-list-progress { flex-wrap: wrap; gap: 12px; }
+.nice-list-progress > span { flex-shrink: 0; }

@@ -1,6 +1,6 @@
 # The Secret Santa Club
 
-A Nuxt 4 app for an eight-person Secret Santa draw. Enter eight names, share personal invitations, and let each participant reveal their recipient.
+A Nuxt 4 app for a Secret Santa draw for groups of three or more. Enter names and optional email addresses, send personal invitations, and let each participant reveal their recipient.
 
 ## Run locally
 
@@ -22,9 +22,9 @@ Open the local address printed by Netlify Dev. The local database is separate fr
 
 If you already run your own local Postgres database, set `NETLIFY_DB_URL` and `NETLIFY_DB_DRIVER=server` in an ignored `.env` file (see `.env.example`), apply the SQL migrations to that local database, and use `npm run dev` directly.
 
-1. Enter a draw title and exactly eight unique names.
+1. Enter a draw title and at least three unique names, with optional email addresses.
 2. Create the draw and save the private organiser URL. It is the only way to return to the invitations.
-3. Send each participant their own invitation link.
+3. Invitations are emailed automatically when an address is provided. Share the personal links for everyone else.
 4. Each person opens their link and presses **Reveal my Secret Santa name**. They can revisit it for a reminder; a reveal never generates a new assignment.
 
 ## Personal links
@@ -35,13 +35,13 @@ An invitation looks like:
 /pick?name=Alicia&token=<private-random-token>
 ```
 
-The name parameter is for readability. The server identifies the participant using the cryptographically random token, so editing `name` does not let someone view a different recipient. The page displays the name verified by the server. Anyone holding an invitation can reveal that person's recipient, so share each link privately. The organiser URL can retrieve all invitation links and must also remain private.
+The name parameter is for readability. The server identifies the participant using the cryptographically random token, so editing `name` does not let someone view a different recipient. The page displays the name verified by the server. Anyone holding an invitation can reveal that person's recipient, so share each link privately. The organiser URL can retrieve manual-sharing invitation links and email status and must also remain private.
 
-The organiser screen shows reveal status, without displaying pairings. Links do not expire. There is no email delivery, login, draw reset, or name editing after creation; create another draw if the group changes.
+The organiser screen shows reveal status, without displaying pairings. Links do not expire. There is no login, draw reset, or name/email editing after creation; create another draw if the group changes.
 
 ## Draw rules and persistence
 
-All eight assignments are generated and saved in one Postgres transaction before any participant picks. A cryptographically random Fisher–Yates shuffle is repeated until no one is assigned themselves. Every valid permutation has the same probability. Every name appears exactly once as a recipient, and the draw cannot get stuck on the last participant. Database constraints reject self-assignments, duplicate names, tokens and recipients, and recipients from another draw. Mutual pairs are allowed. Repeated or concurrent reveals preserve both the pairing and the first reveal timestamp.
+All assignments are generated and saved in one Postgres transaction before any participant picks. A cryptographically random Fisher–Yates shuffle is repeated until no one is assigned themselves. Every valid permutation has the same probability. Every name appears exactly once as a recipient, and the draw cannot get stuck on the last participant. Database constraints reject self-assignments, duplicate names, tokens and recipients, and recipients from another draw. Mutual pairs are allowed. Repeated or concurrent reveals preserve both the pairing and the first reveal timestamp.
 
 Storage uses [Netlify Database](https://docs.netlify.com/build/data-and-storage/netlify-database/) (managed Postgres) through `@netlify/database` and Drizzle ORM. The connection is resolved at runtime, and importing the app or building it does not connect to the database. Names, private invitation tokens, and pairings remain server-side. The organiser's original name order is preserved with an explicit position column.
 
@@ -53,7 +53,7 @@ Installing `@netlify/database` lets Netlify provision and configure the site's P
 
 The schema is defined in `db/schema.ts`. After a future schema change, run `npm run db:generate` and commit the newly generated migration and snapshot. Keep deployed migration files unchanged; create a new migration for subsequent changes. Drizzle ORM and Kit use matching release-candidate versions because the native Netlify Database adapter is not available in Drizzle's current stable release.
 
-There is no existing application data to migrate for this change. New draws persist in Netlify Database across function instances and redeployments. Production connection details are supplied by Netlify; never commit them to Git. Serve over HTTPS and avoid logging full invitation URLs.
+New draws persist in Netlify Database across function instances and redeployments. Production connection details are supplied by Netlify; never commit them to Git. Serve over HTTPS and avoid logging full invitation URLs.
 
 ## Verify and build
 
@@ -78,6 +78,16 @@ This test invokes the generated Netlify function with Web `Request` objects and 
 
 The UI uses Google Fonts with local serif/sans-serif fallbacks and contains no analytics or third-party JavaScript. Private page and API responses use `no-store` and `no-referrer` headers.
 
-Tests apply the exact committed SQL migration to isolated PGlite Postgres engines. They cover the eight-person rules across 1,000 draws, input normalisation and duplicates, invalid credentials, separate draws, repeat and concurrent reveals, SQL constraints, transaction rollback, asynchronous API errors, and persistence across database restart. No live database or Netlify credentials are used. The production test starts the built Node server and a temporary Postgres protocol server, then checks pages, API validation, credentials, privacy headers, name tampering, and concurrent reveals through the real Netlify Database/Drizzle connection path.
+Tests apply the exact committed SQL migration to isolated PGlite Postgres engines. They cover the participant rules across 1,000 draws, input normalisation and duplicates, invalid credentials, separate draws, repeat and concurrent reveals, SQL constraints, transaction rollback, asynchronous API errors, and persistence across database restart. No live database or Netlify credentials are used. The production test starts the built Node server and a temporary Postgres protocol server, then checks pages, API validation, credentials, privacy headers, name tampering, and concurrent reveals through the real Netlify Database/Drizzle connection path.
 
 The serverless regression test exercises Netlify's HTTP database driver as well as the local Postgres driver. It uses Neon's real request encoding and response parsing with an isolated Postgres transport. The store adapts Drizzle rc.5's conventional SQL-string calls to Neon v1's `.query()` API while preserving Netlify's credential refresh and transaction pool.
+
+## Email invitations
+
+Set `RESEND_API_KEY`, `EMAIL_FROM` (a sender on a verified Resend domain), and `SITE_URL` (the public site origin) in Netlify’s server environment or your ignored local `.env`. Never expose the API key in public runtime configuration. Names-only draws work without email configuration.
+
+Invitations are sent individually after the draw transaction commits. “Email sent” means Resend accepted the message, rather than confirmed inbox delivery. Successful email invitations hide their sharing controls; participants without email retain copy/view-link controls. Failed emails show retry and manual-sharing options. Missing configuration also records a failed send without losing the draw.
+
+Requests attempt pending invitations for up to 20 seconds, with eight-second provider timeouts. Any remaining invitations appear as pending on the organiser page with a Send email button. Refreshing status does not send messages. Interrupted sends can be retried after a one-minute lease. Retries preserve assignments and use the same provider idempotency key; successful sends are also recorded in the database. Resend’s idempotency window is 24 hours, so an ambiguous interrupted send retried after that window could arrive twice. No delivery/bounce webhook tracking is included.
+
+Deploy the new database migration before serving the updated application. Existing draws retain manual sharing and unchanged invitation links.

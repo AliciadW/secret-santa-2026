@@ -13,19 +13,33 @@ test('1,000 draws always give every person one unique recipient and never themse
   }
 })
 
-test('two people can draw one another and impossible group sizes fail', () => {
-  assert.deepEqual(makeAssignments(2), [1, 0])
-  for (const size of [0, 1, -1, 2.5, NaN]) assert.throws(() => makeAssignments(size))
+test('groups smaller than three and impossible group sizes fail', () => {
+  for (const size of [0, 1, 2, -1, 2.5, NaN]) assert.throws(() => makeAssignments(size))
 })
 
-test('validation requires exactly eight distinct, nonempty names', () => {
-  for (const invalid of [undefined, null, {}, { names: names.slice(1) }, { names: [...names, 'Ivy'] }, { names: ['', ...names.slice(1)] }, { names: [42, ...names.slice(1)] }, { names: ['ben', ...names.slice(1)] }, { names: ['A'.repeat(41), ...names.slice(1)] }, { names, title: 42 }, { names, title: 'A'.repeat(81) }]) {
+test('validation requires at least three distinct, nonempty names', () => {
+  for (const invalid of [undefined, null, {}, { names: names.slice(0, 2) }, { names: ['', ...names.slice(1)] }, { names: [42, ...names.slice(1)] }, { names: ['ben', ...names.slice(1)] }, { names: ['A'.repeat(41), ...names.slice(1)] }, { names, title: 42 }, { names, title: 'A'.repeat(81) }]) {
     assert.throws(() => validateDraw(invalid))
   }
 })
 
 test('validation normalises spaces and Unicode and detects equivalent names', () => {
-  assert.deepEqual(validateDraw({ names: ['  Alicia  Smith ', ...names.slice(1)] }), { title: 'Our Secret Santa', names: ['Alicia Smith', ...names.slice(1)] })
+  assert.deepEqual(validateDraw({ names: ['  Alicia  Smith ', ...names.slice(1)] }), { title: 'Our Secret Santa', names: ['Alicia Smith', ...names.slice(1)], emails: names.map(() => null) })
   assert.throws(() => validateDraw({ names: ['José', 'Jose\u0301', ...names.slice(2)] }))
   assert.throws(() => validateDraw({ names: ['Ali\u200bcia', ...names.slice(1)] }))
+})
+
+
+test('flexible groups and optional emails are validated and normalised', () => {
+  for (const size of [3, 8, 12]) {
+    const names = Array.from({ length: size }, (_, i) => `Person ${i}`)
+    assert.equal(validateDraw({ names }).names.length, size)
+    const assignments = makeAssignments(size)
+    assert.equal(new Set(assignments).size, size)
+    assert.ok(assignments.every((recipient, giver) => recipient !== giver))
+  }
+  assert.deepEqual(validateDraw({ names: names.slice(0, 3), emails: [' a@example.com ', '', '  '] }).emails, ['a@example.com', null, null])
+  for (const emails of [[], ['bad', '', ''], [42, '', ''], 'bad']) {
+    assert.throws(() => validateDraw({ names: names.slice(0, 3), emails }))
+  }
 })

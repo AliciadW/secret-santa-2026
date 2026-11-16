@@ -1,9 +1,10 @@
 import { createHash, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto'
 import { getDatabase } from '@netlify/database'
-import { asc, eq, sql } from 'drizzle-orm'
+import { and, asc, eq, ne, or, sql } from 'drizzle-orm'
 import { drizzle } from 'drizzle-orm/netlify-db'
 import { alias, type PgAsyncDatabase, type PgQueryResultHKT } from 'drizzle-orm/pg-core'
 import { draws, participants } from '../../db/schema'
+import type { InvitationSender } from './email'
 import { DrawError, makeAssignments, validateDraw } from './draw'
 
 const secret = () => randomBytes(32).toString('base64url')
@@ -14,10 +15,10 @@ export class DrawStore {
   constructor(private db: DrawDatabase) {}
 
   async create(input: unknown) {
-    const { title, names } = validateDraw(input)
+    const { title, names, emails } = validateDraw(input)
     const id = randomUUID()
     const adminKey = secret()
-    const people = names.map(name => ({ id: randomUUID(), name, token: secret() }))
+    const people = names.map((name, index) => ({ id: randomUUID(), name, email: emails[index], emailStatus: emails[index] ? 'pending' : 'manual', token: secret() }))
     const assignments = makeAssignments(people.length)
     await this.db.transaction(async (tx) => {
       await tx.insert(draws).values({ id, title, adminKeyHash: hash(adminKey) })
@@ -39,15 +40,55 @@ export class DrawStore {
       throw new DrawError(404, 'This organiser link is invalid. Check that you copied the full link.')
     }
     const people = await this.db.select({
+      id: participants.id,
       name: participants.name,
+      email: participants.email,
+      emailStatus: participants.emailStatus,
+      emailAttemptAt: participants.emailAttemptAt,
       token: participants.token,
       openedAt: participants.openedAt,
     }).from(participants).where(eq(participants.drawId, id)).orderBy(asc(participants.position))
     return {
       id: draw.id,
       title: draw.title,
-      participants: people.map(person => ({ name: person.name, token: person.token, opened: Boolean(person.openedAt) })),
+      participants: people.map(person => {
+        const emailStatus = person.emailStatus === 'sending' && person.emailAttemptAt && Date.now() - Date.parse(person.emailAttemptAt) >= 60000 ? 'pending' : person.emailStatus
+        return { id: person.id, name: person.name, email: person.email, emailStatus,
+          token: emailStatus === 'manual' || emailStatus === 'failed' ? person.token : null,
+          opened: Boolean(person.openedAt) }
+      }),
     }
+  }
+
+  async sendPending(id: string, key: string, sender: InvitationSender) {
+    const draw = await this.organiser(id, key)
+    // Bound the request's work. Remaining invitations are visibly pending and retryable.
+    const deadline = Date.now() + 20000
+    for (const person of draw.participants) {
+      if (Date.now() >= deadline) break
+      if (person.emailStatus === 'pending') {
+        await this.sendEmail(id, key, person.id, sender)
+        await new Promise(resolve => setTimeout(resolve, 550))
+      }
+    }
+  }
+
+  async sendEmail(id: string, key: string, personId: string, sender: InvitationSender) {
+    const draw = await this.organiser(id, key)
+    if (!draw.participants.some(person => person.id === personId && person.email)) {
+      throw new DrawError(404, 'Email invitation not found.')
+    }
+    // A lease prevents concurrent retries; abandoned requests can be retried after a minute.
+    const [person] = await this.db.update(participants).set({ emailStatus: 'sending', emailAttemptAt: new Date().toISOString() })
+      .where(and(eq(participants.drawId, id), eq(participants.id, personId), ne(participants.emailStatus, 'sent'),
+        or(ne(participants.emailStatus, 'sending'), sql`${participants.emailAttemptAt} < CURRENT_TIMESTAMP - INTERVAL '60 seconds'`)))
+      .returning()
+    if (!person) return
+    let emailStatus = 'sent'
+    try {
+      await sender({ id: person.id, name: person.name, email: person.email!, token: person.token, title: draw.title })
+    } catch { emailStatus = 'failed' }
+    await this.db.update(participants).set({ emailStatus }).where(eq(participants.id, personId))
   }
 
   private async person(token: string) {

@@ -18,6 +18,9 @@ test('production app serves pages, enforces credentials, and reveals one stable 
   const server = spawn(process.execPath, ['.output/server/index.mjs'], {
     env: {
       ...process.env,
+      RESEND_API_KEY: '',
+      EMAIL_FROM: '',
+      SITE_URL: '',
       NITRO_HOST: '127.0.0.1',
       NITRO_PORT: String(port),
       NETLIFY_DB_URL: `postgresql://postgres:postgres@${postgres.getServerConn()}/postgres?sslmode=disable`,
@@ -45,7 +48,7 @@ test('production app serves pages, enforces credentials, and reveals one stable 
     assert.equal(home.headers.get('referrer-policy'), 'no-referrer')
     const names = ['Alicia', 'Ben', 'Cara', 'Daniel', 'Emma', 'Finn', 'Grace', 'Hugo']
     const postDraw = body => fetch(`${base}/api/draws`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) })
-    assert.equal((await postDraw({ names: names.slice(1) })).status, 400)
+    assert.equal((await postDraw({ names: names.slice(0, 2) })).status, 400)
     assert.equal((await postDraw({ names: ['ben', ...names.slice(1)] })).status, 400)
     assert.equal((await postDraw({ names, title: 'a'.repeat(9000) })).status, 413)
     const response = await postDraw({ names })
@@ -81,6 +84,21 @@ test('production app serves pages, enforces credentials, and reveals one stable 
       return results[0].recipient
     }))
     assert.deepEqual(reveals.sort(), [...names].sort())
+    const emailedResponse = await postDraw({ names: names.slice(0, 3), emails: ['a@example.com', '', ''] })
+    assert.equal(emailedResponse.status, 200)
+    const emailed = await emailedResponse.json()
+    const emailAdminPath = `${base}/api/draws/${emailed.id}`
+    const emailAdmin = await (await fetch(emailAdminPath, { headers: auth(emailed.adminKey) })).json()
+    const emailPerson = emailAdmin.participants[0]
+    assert.equal(emailPerson.emailStatus, 'failed')
+    assert.ok(emailPerson.token)
+    assert.equal(emailAdmin.participants[1].emailStatus, 'manual')
+    const retryPath = `${emailAdminPath}/participants/${emailPerson.id}/email`
+    assert.equal((await fetch(retryPath, { method: 'POST' })).status, 401)
+    assert.equal((await fetch(retryPath, { method: 'POST', headers: auth(draw.adminKey) })).status, 404)
+    assert.equal((await fetch(retryPath, { method: 'POST', headers: auth(emailed.adminKey) })).status, 200)
+    const retried = await (await fetch(emailAdminPath, { headers: auth(emailed.adminKey) })).json()
+    assert.equal(retried.participants[0].token, emailPerson.token)
     const after = await (await fetch(adminPath, { headers: auth(draw.adminKey) })).json()
     assert.ok(after.participants.every(person => person.opened))
   } finally {
@@ -88,6 +106,11 @@ test('production app serves pages, enforces credentials, and reveals one stable 
     server.kill('SIGTERM')
     await exited
     await postgres.stop()
+    // Socket close callbacks can still be clearing transaction state. Drain them
+    // before destroying the database's WASM instance.
+    await new Promise(resolve => setImmediate(resolve))
+    await database.runExclusive(async () => {})
+    await new Promise(resolve => setImmediate(resolve))
     await database.close()
   }
 })

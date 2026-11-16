@@ -111,3 +111,53 @@ test('draws, private links, recipients and revealed status survive a database re
     assert.deepEqual(await persistedStore.reveal(token), revealed)
   } finally { await persisted.close(); await rm(directory, { recursive: true, force: true }) }
 })
+
+test('flexible groups persist beyond the old position limit', async () => {
+  for (const size of [3, 12]) {
+    const names = Array.from({ length: size }, (_, index) => `Guest ${index}`)
+    const draw = await store.create({ names })
+    const admin = await store.organiser(draw.id, draw.adminKey)
+    assert.equal(admin.participants.length, size)
+    const recipients = await Promise.all(admin.participants.map(person => store.reveal(person.token!)))
+    assert.deepEqual(recipients.map(person => person.recipient).sort(), [...names].sort())
+  }
+})
+
+test('email status persists, failures allow sharing, and retries preserve invitations', async () => {
+  const draw = await store.create({ names: names.slice(0, 3), emails: ['a@example.com', 'b@example.com', ''] })
+  let admin = await store.organiser(draw.id, draw.adminKey)
+  const [a, b, c] = admin.participants
+  assert.equal(a!.token, null)
+  assert.equal(c!.emailStatus, 'manual')
+  assert.ok(c!.token)
+  let sentToken = ''
+  await store.sendEmail(draw.id, draw.adminKey, a!.id, async person => { sentToken = person.token })
+  await store.sendEmail(draw.id, draw.adminKey, b!.id, async () => { throw new Error('provider failure') })
+  admin = await store.organiser(draw.id, draw.adminKey)
+  assert.equal(admin.participants[0]!.emailStatus, 'sent')
+  assert.equal(admin.participants[0]!.token, null)
+  assert.equal(admin.participants[1]!.emailStatus, 'failed')
+  const fallback = admin.participants[1]!.token
+  assert.ok(fallback)
+  assert.equal('email' in await store.invitation(sentToken), false)
+  await store.sendEmail(draw.id, draw.adminKey, a!.id, async () => { assert.fail('must not send twice') })
+  await store.sendEmail(draw.id, draw.adminKey, b!.id, async person => { assert.equal(person.token, fallback) })
+  assert.equal((await store.organiser(draw.id, draw.adminKey)).participants[1]!.token, null)
+  await assert.rejects(store.sendEmail(draw.id, 'wrong', a!.id, async () => {}))
+  await assert.rejects(store.sendEmail(draw.id, draw.adminKey, c!.id, async () => {}))
+})
+
+test('concurrent sends use a lease and interrupted sends become retryable', async () => {
+  const draw = await store.create({ names: names.slice(0, 3), emails: ['a@example.com', '', ''] })
+  const person = (await store.organiser(draw.id, draw.adminKey)).participants[0]!
+  let calls = 0
+  await Promise.all(Array.from({ length: 5 }, () => store.sendEmail(draw.id, draw.adminKey, person.id, async () => {
+    calls++
+    await new Promise(resolve => setTimeout(resolve, 20))
+  })))
+  assert.equal(calls, 1)
+  await client.query("UPDATE participants SET email_status = 'sending', email_attempt_at = CURRENT_TIMESTAMP - INTERVAL '2 minutes' WHERE id = $1", [person.id])
+  assert.equal((await store.organiser(draw.id, draw.adminKey)).participants[0]!.emailStatus, 'pending')
+  await store.sendEmail(draw.id, draw.adminKey, person.id, async () => { calls++ })
+  assert.equal(calls, 2)
+})

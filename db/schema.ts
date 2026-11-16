@@ -12,6 +12,9 @@ export const participants = pgTable('participants', {
   id: text('id').primaryKey(),
   drawId: text('draw_id').notNull().references(() => draws.id),
   name: text('name').notNull(),
+  email: text('email'),
+  emailStatus: text('email_status').default('manual').notNull(),
+  emailAttemptAt: timestamp('email_attempt_at', { withTimezone: true, mode: 'string' }),
   token: text('token').notNull().unique(),
   recipientId: text('recipient_id').notNull(),
   openedAt: timestamp('opened_at', { withTimezone: true, mode: 'string' }),
@@ -23,7 +26,7 @@ export const participants = pgTable('participants', {
   unique('participants_draw_id_recipient_id_unique').on(table.drawId, table.recipientId),
   unique('participants_draw_id_position_unique').on(table.drawId, table.position),
   check('participants_no_self_assignment', sql`${table.id} <> ${table.recipientId}`),
-  check('participants_position_range', sql`${table.position} >= 0 AND ${table.position} < 8`),
+  check('participants_position_range', sql`${table.position} >= 0`),
   foreignKey({
     name: 'participants_recipient_same_draw_fk',
     columns: [table.drawId, table.recipientId],
