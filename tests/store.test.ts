@@ -21,7 +21,7 @@ beforeEach(async () => { await client.exec('TRUNCATE participants, draws') })
 after(async () => { await client?.close() })
 
 test('every invitation reveals one unique recipient, and repeating never redraws', async () => {
-  for (const size of [2, 3, 8, 12, MAX_PARTICIPANTS]) {
+  for (const size of [3, 8, 12, MAX_PARTICIPANTS]) {
     const names = Array.from({ length: size }, (_, index) => `Person ${index + 1}`)
     const draw = await store.create({ names })
     const admin = await store.organiser(draw.id, draw.adminKey)

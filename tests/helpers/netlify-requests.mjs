@@ -9,7 +9,8 @@ const names = ['Alicia', 'Ben', 'Cara', 'Daniel', 'Emma', 'Finn', 'Grace', 'Hugo
 assert.equal((await post('{')).status, 400)
 assert.equal((await post('')).status, 400)
 assert.equal((await post(JSON.stringify({ names: names.slice(0, 1) }))).status, 400)
-assert.equal((await post(JSON.stringify({ names: names.slice(0, 2) }))).status, 200)
+assert.equal((await post(JSON.stringify({ names: names.slice(0, 2) }))).status, 400)
+assert.equal((await post(JSON.stringify({ names: names.slice(0, 3) }))).status, 200)
 assert.equal((await post(JSON.stringify({ names: ['ben', ...names.slice(1)] }))).status, 400)
 assert.equal((await post(JSON.stringify({ names, title: 'a'.repeat(9000) }))).status, 413)
 // Check byte length rather than character count for Unicode payloads too.
