@@ -1,6 +1,6 @@
 # The Secret Santa Club
 
-A Nuxt 4 app for a Secret Santa draw with 2–50 people. Choose the group size, enter the names, share personal invitations, and let each participant reveal their recipient.
+A Nuxt 4 app for a Secret Santa draw with 3–50 people. Choose the group size, enter the names, share personal invitations, and let each participant reveal their recipient.
 
 ## Run locally
 
@@ -15,7 +15,7 @@ Open `http://localhost:3000`. When no database connection is configured, Nuxt de
 
 If you use `netlify dev` or supply your own `NETLIFY_DB_URL`, that connection is used instead. The app does not run migrations automatically against supplied connections; use the appropriate local migration tooling. For a normal local Postgres server, set `NETLIFY_DB_DRIVER=server` as well (see `.env.example`). Production continues using Netlify's managed database and deployment-time migrations.
 
-1. Enter a draw title, choose the number of participants (2–50), and enter a unique name for each person. Changing the count preserves names you already entered if you increase it again.
+1. Enter a draw title, choose the number of participants (3–50), and enter a unique name for each person. Changing the count preserves names you already entered if you increase it again.
 2. Create the draw and save the private organiser URL. It is the only way to return to the invitations.
 3. Send each participant their own invitation link.
 4. Each person opens their link and presses **Unwrap my Christmas secret**. They can revisit it for a reminder; a reveal never generates a new assignment.
@@ -71,6 +71,6 @@ This test invokes the generated Netlify function with Web `Request` objects and 
 
 The UI uses Google Fonts with local serif/sans-serif fallbacks and contains no analytics or third-party JavaScript. Private page and API responses use `no-store` and `no-referrer` headers.
 
-Tests apply the exact committed SQL migration to isolated PGlite Postgres engines. They cover the draw rules across 1,000 draws of varying sizes, groups of 2–50, and migration of existing draws, input normalisation and duplicates, invalid credentials, separate draws, repeat and concurrent reveals, SQL constraints, transaction rollback, asynchronous API errors, and persistence across database restart. No live database or Netlify credentials are used. The production test starts the built Node server and a temporary Postgres protocol server, then checks pages, API validation, credentials, privacy headers, name tampering, and concurrent reveals through the real Netlify Database/Drizzle connection path.
+Tests apply the exact committed SQL migration to isolated PGlite Postgres engines. They cover the draw rules across 1,000 draws of varying sizes, groups of 3–50, and migration of existing draws, input normalisation and duplicates, invalid credentials, separate draws, repeat and concurrent reveals, SQL constraints, transaction rollback, asynchronous API errors, and persistence across database restart. No live database or Netlify credentials are used. The production test starts the built Node server and a temporary Postgres protocol server, then checks pages, API validation, credentials, privacy headers, name tampering, and concurrent reveals through the real Netlify Database/Drizzle connection path.
 
 The serverless regression test exercises Netlify's HTTP database driver as well as the local Postgres driver. It uses Neon's real request encoding and response parsing with an isolated Postgres transport. The store adapts Drizzle rc.5's conventional SQL-string calls to Neon v1's `.query()` API while preserving Netlify's credential refresh and transaction pool.

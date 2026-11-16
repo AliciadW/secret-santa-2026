@@ -33,7 +33,7 @@ export function validateDraw(input: unknown): { title: string; names: string[] }
 // Rejection sampling over Fisher–Yates permutations gives every valid draw the
 // same chance, including draws with multiple cycles. Never pick greedily.
 export function makeAssignments(size: number): number[] {
-  if (!Number.isInteger(size) || size < 2) throw new DrawError(400, 'At least two people are needed.')
+  if (!Number.isInteger(size) || size < MIN_PARTICIPANTS) throw new DrawError(400, `At least ${MIN_PARTICIPANTS} people are needed.`)
   while (true) {
     const recipients = Array.from({ length: size }, (_, i) => i)
     for (let i = size - 1; i > 0; i--) {

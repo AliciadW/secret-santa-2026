@@ -46,6 +46,8 @@ test('production app serves pages, enforces credentials, and reveals one stable 
     const names = ['Alicia', 'Ben', 'Cara', 'Daniel', 'Emma', 'Finn', 'Grace', 'Hugo']
     const postDraw = body => fetch(`${base}/api/draws`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) })
     assert.equal((await postDraw({ names: names.slice(0, 1) })).status, 400)
+    assert.equal((await postDraw({ names: names.slice(0, 2) })).status, 400)
+    assert.equal((await postDraw({ names: names.slice(0, 3) })).status, 200)
     assert.equal((await postDraw({ names: ['ben', ...names.slice(1)] })).status, 400)
     assert.equal((await postDraw({ names, title: 'a'.repeat(9000) })).status, 413)
     const response = await postDraw({ names })
